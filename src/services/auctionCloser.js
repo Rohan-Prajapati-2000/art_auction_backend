@@ -24,6 +24,13 @@ function attachIO(io) {
 async function closeDueAuctions() {
   const now = new Date();
 
+  // Flip auctions whose start time has passed from "upcoming" to "live",
+  // so the stored status (used by the ?status= filter) matches reality.
+  await Auction.updateMany(
+    { status: 'upcoming', startTime: { $lte: now }, endTime: { $gt: now } },
+    { $set: { status: 'live' } },
+  );
+
   const dueAuctions = await Auction.find({
     status: { $ne: 'ended' },
     endTime: { $lte: now },
